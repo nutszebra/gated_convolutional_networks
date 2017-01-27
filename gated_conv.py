@@ -7,7 +7,6 @@ import numpy as np
 import nutszebra_chainer
 import chainer.links as L
 import chainer.functions as F
-from collections import defaultdict
 
 
 class Gated_Linear_Unit(nutszebra_chainer.Model):
@@ -116,17 +115,3 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
     def calc_loss(self, y, t):
         loss = F.softmax_cross_entropy(y, t)
         return loss
-
-    def accuracy(self, y, t, xp=np):
-        y.to_cpu()
-        t.to_cpu()
-        indices = np.where((t.data == np.argmax(y.data, axis=1)) == True)[0]
-        accuracy = defaultdict(int)
-        for i in indices:
-            accuracy[t.data[i]] += 1
-        indices = np.where((t.data == np.argmax(y.data, axis=1)) == False)[0]
-        false_accuracy = defaultdict(int)
-        false_y = np.argmax(y.data, axis=1)
-        for i in indices:
-            false_accuracy[(t.data[i], false_y[i])] += 1
-        return accuracy, false_accuracy
