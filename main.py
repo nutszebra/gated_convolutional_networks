@@ -69,13 +69,10 @@ if __name__ == '__main__':
     print('set optimizier')
     optimizer = optimizers.MomentumSGD(lr, 0.9)
     weight_decay = chainer.optimizer.WeightDecay(1.0e-4)
-    clip = chainer.optimizer.GradientClipping(0.1)
     optimizer.setup(model)
     optimizer.add_hook(weight_decay)
-    optimizer.add_hook(clip)
     print(' lr: {}'.format(lr))
     print(' weight decay: {}'.format(1.0e-4))
-    print(' gradient clipping: {}'.format(0.1))
 
     print('start learning')
     for i in epoch_bar:
@@ -99,7 +96,7 @@ if __name__ == '__main__':
             optimizer.update()
             loss.to_cpu()
             accum_loss += loss.data
-        print('epoch {}: train-loss, {}'.format(i, accum_loss / len(train_x)))
+        print('epoch {}: train-loss, {}'.format(i, accum_loss / (float(len(train_x)) / batch)))
         test_bar = utility.create_progressbar(len(test_x), desc='test', stride=batch, start=0)
         accuracy = 0
         for ii in test_bar:

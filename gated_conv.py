@@ -9,11 +9,18 @@ import chainer.links as L
 import chainer.functions as F
 
 
+class DoNothing(object):
+
+    def __call__(self, x):
+        return x
+
+
 class Gated_Linear_Unit(nutszebra_chainer.Model):
 
-    def __init__(self, in_channel, out_channel, timestep=2):
+    def __init__(self, in_channel, out_channel, timestep=2, activation=F.relu):
         self.timestep = timestep
         self.pad = timestep - 1
+        self.activation = activation
         super(Gated_Linear_Unit, self).__init__(
             conv=L.Convolution2D(1, out_channel, (in_channel, timestep), 1, 0),
             conv_f=L.Convolution2D(1, out_channel, (in_channel, timestep), 1, 0),
@@ -53,7 +60,7 @@ class Gated_Linear_Unit(nutszebra_chainer.Model):
 
     def __call__(self, x, train=False):
         # x: batch,  1, in_channel, input_length
-        A = self.conv(self.add_zero_pad(x, self.pad, 3))
+        A = self.activation(self.conv(self.add_zero_pad(x, self.pad, 3)))
         B = F.sigmoid(self.conv_f(self.add_zero_pad(x, self.pad, 3)))
         h = A * B
         batch, out_channel, _, input_length = h.shape
@@ -90,9 +97,12 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         modules = []
         # register layers
         [self.add_link(*link) for link in modules]
-        modules += [('resblock_1', ResBlock(embed_dimension, 128, 5))]
-        modules += [('resblock_2', ResBlock(128, 256, 5))]
-        modules += [('gated_conv', Gated_Linear_Unit(256, category_num, 5))]
+        modules += [('resblock_1', ResBlock(embed_dimension, 16, 5))]
+        modules += [('resblock_2', ResBlock(16, 16, 5))]
+        modules += [('resblock_3', ResBlock(16, 16, 5))]
+        modules += [('resblock_4', ResBlock(16, 16, 5))]
+        modules += [('resblock_5', ResBlock(16, 32, 5))]
+        modules += [('gated_conv', Gated_Linear_Unit(32, category_num, 5, DoNothing()))]
         # register layers
         [self.add_link(*link) for link in modules]
         self.modules = modules
@@ -107,7 +117,7 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         return int(np.sum([link.count_parameters() for _, link in self.modules]))
 
     def __call__(self, x, train=True):
-        for i in six.moves.range(1, 2 + 1):
+        for i in six.moves.range(1, 5 + 1):
             x = self['resblock_{}'.format(i)](x, train)
         batch = x.data.shape[0]
         return F.reshape(self.gated_conv(x), (batch, self.category_num, -1))
