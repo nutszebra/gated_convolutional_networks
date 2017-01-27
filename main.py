@@ -103,10 +103,10 @@ if __name__ == '__main__':
         test_bar = utility.create_progressbar(len(test_x), desc='test', stride=batch, start=0)
         accuracy = 0
         for ii in test_bar:
-            x = np.reshape(test_y[ii:ii + batch], (batch, 1, 1, -1))
+            x = np.array(test_x[ii:ii + batch])[:, np.newaxis, np.newaxis, :]
             t = test_y[ii:ii + batch]
             x = model.prepare_input(x, dtype=np.float32, volatile=True)
             y = np.argmax(model(x, train=False).data, 1)
-            for i in range(batch):
+            for i in range(len(t)):
                 accuracy += int(np.all(t[i] == y[i]))
         print('epoch {}: test-accuracy {}'.format(i, float(accuracy) / len(test_x)))
