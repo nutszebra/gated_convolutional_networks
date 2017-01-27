@@ -1,3 +1,5 @@
+import sys
+sys.path.append('./trainer')
 import six
 import chainer
 import functools
@@ -8,14 +10,14 @@ import chainer.functions as F
 from collections import defaultdict
 
 
-class Gated_Conv(nutszebra_chainer.Model):
+class Gated_Linear_Unit(nutszebra_chainer.Model):
 
     def __init__(self, in_channel, out_channel, timestep=2):
         self.timestep = timestep
         self.pad = timestep - 1
-        super(Gated_Conv, self).__init__(
-            conv=L.Convolution2D(1, out_channel, (in_channel, timestep), (1, 1), (0, self.pad)),
-            conv_f=L.Convolution2D(1, out_channel, (in_channel, timestep), (1, 1), (0, self.pad)),
+        super(Gated_Linear_Unit, self).__init__(
+            conv=L.Convolution2D(1, out_channel, (in_channel, timestep), 1, 0),
+            conv_f=L.Convolution2D(1, out_channel, (in_channel, timestep), 1, 0),
         )
 
     @staticmethod
@@ -37,13 +39,23 @@ class Gated_Conv(nutszebra_chainer.Model):
             self._weight_initialization(name)
 
     @staticmethod
-    def remove_pad(x, pad):
-        return F.concat(F.split_axis(x, x.data.shape[-1], len(x.data.shape) - 1)[:pad], -1)
+    def add_zero_pad(x, pad, axis, front=True, dtype=np.float32):
+        if pad < 1:
+            return x
+        sizes = list(x.data.shape)
+        sizes[axis] = pad
+        pad_mat = chainer.Variable(np.zeros(sizes, dtype=dtype), volatile=x.volatile)
+        if not type(x.data) == np.ndarray:
+            pad_mat.to_gpu()
+        if front:
+            return F.concat((pad_mat, x), axis=axis)
+        else:
+            return F.concat((x, pad_mat), axis=axis)
 
     def __call__(self, x, train=False):
         # x: batch,  1, in_channel, input_length
-        A = F.relu(self.remove_pad(self.conv(x), -self.pad))
-        B = F.sigmoid(self.remove_pad(self.conv_f(x), -self.pad))
+        A = self.conv(self.add_zero_pad(x, self.pad, 3))
+        B = F.sigmoid(self.conv_f(self.add_zero_pad(x, self.pad, 3)))
         h = A * B
         batch, out_channel, _, input_length = h.shape
         return F.reshape(h, (batch, 1, out_channel, input_length))
@@ -54,8 +66,8 @@ class ResBlock(nutszebra_chainer.Model):
     def __init__(self, in_channel, out_channel, timestep=2):
         self.timestep = timestep
         super(ResBlock, self).__init__(
-            conv1=Gated_Conv(in_channel, out_channel, timestep),
-            conv2=Gated_Conv(out_channel, out_channel, timestep),
+            conv1=Gated_Linear_Unit(in_channel, out_channel, timestep),
+            conv2=Gated_Linear_Unit(out_channel, out_channel, timestep),
         )
 
     def weight_initialization(self):
@@ -65,24 +77,11 @@ class ResBlock(nutszebra_chainer.Model):
     def count_parameters(self):
         return self.conv1.count_parameters() + self.conv2.count_parameters()
 
-    @staticmethod
-    def concatenate_zero_pad(x, h_shape, volatile, h_type):
-        x = F.swapaxes(x, 1, 2)
-        h_shape = (h_shape[0], h_shape[2], h_shape[1], h_shape[3])
-        _, x_channel, _, _ = x.data.shape
-        batch, h_channel, h_y, h_x = h_shape
-        if x_channel == h_channel:
-            return F.swapaxes(x, 1, 2)
-        pad = chainer.Variable(np.zeros((batch, h_channel - x_channel, h_y, h_x), dtype=np.float32), volatile=volatile)
-        if h_type is not np.ndarray:
-            pad.to_gpu()
-        return F.swapaxes(F.concat((x, pad)), 1, 2)
-
     def __call__(self, x, train=False):
         h = self.conv1(x, train)
         h = self.conv2(h, train)
-        h = h + self.concatenate_zero_pad(x, h.data.shape, h.volatile, type(h.data))
-        return h
+        diff_channel = h.data.shape[2] - x.data.shape[2]
+        return h + Gated_Linear_Unit.add_zero_pad(x, diff_channel, 2)
 
 
 class Gated_Convolutional_Network(nutszebra_chainer.Model):
@@ -102,10 +101,12 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         modules += [('resblock_8', ResBlock(512, 1024, 3))]
         modules += [('resblock_9', ResBlock(1024, 1024, 3))]
         modules += [('resblock_10', ResBlock(1024, 1024, 3))]
-        modules += [('gated_conv', Gated_Conv(1024, category_num, 3))]
+        modules += [('gated_conv', Gated_Linear_Unit(1024, category_num, 3))]
         # register layers
         [self.add_link(*link) for link in modules]
         self.modules = modules
+        self.embed_dimension = embed_dimension
+        self.category_num = category_num
         self.name = 'Gated_Convolutional_Network_{}_{}'.format(embed_dimension, category_num)
 
     def weight_initialization(self):
@@ -117,7 +118,8 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
     def __call__(self, x, train=True):
         for i in six.moves.range(1, 10 + 1):
             x = self['resblock_{}'.format(i)](x, train)
-        return self.gated_conv(x)
+        batch = x.data.shape[0]
+        return F.reshape(self.gated_conv(x), (batch, self.category_num, -1))
 
     def calc_loss(self, y, t):
         loss = F.softmax_cross_entropy(y, t)
