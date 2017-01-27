@@ -108,7 +108,7 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         return int(np.sum([link.count_parameters() for _, link in self.modules]))
 
     def __call__(self, x, train=True):
-        for i in six.moves.range(1, 10 + 1):
+        for i in six.moves.range(1, 2 + 1):
             x = self['resblock_{}'.format(i)](x, train)
         batch = x.data.shape[0]
         return F.reshape(self.gated_conv(x), (batch, self.category_num, -1))
