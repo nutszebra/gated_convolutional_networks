@@ -107,6 +107,6 @@ if __name__ == '__main__':
             t = test_y[ii:ii + batch]
             x = model.prepare_input(x, dtype=np.float32, volatile=True)
             y = np.argmax(model(x, train=False).data, 1)
-            for i in range(len(t)):
-                accuracy += int(np.all(t[i] == y[i]))
+            for iii in range(len(t)):
+                accuracy += int(np.all(t[iii] == y[iii]))
         print('epoch {}: test-accuracy {}'.format(i, float(accuracy) / len(test_x)))
