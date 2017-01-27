@@ -20,7 +20,7 @@ if __name__ == '__main__':
                         default=128,
                         help='batch number')
     parser.add_argument('--lr', '-lr', type=float,
-                        default=1.0e-3,
+                        default=0.1,
                         help='learning rate')
     parser.add_argument('--epoch', '-e', type=int,
                         default=200,
@@ -59,6 +59,7 @@ if __name__ == '__main__':
     print(' done')
 
     if g >= 0:
+        print('gpu mode')
         model.to_gpu(g)
 
     sample = nutszebra_sampling.Sampling()
