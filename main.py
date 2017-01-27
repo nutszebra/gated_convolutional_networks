@@ -17,7 +17,7 @@ if __name__ == '__main__':
                         default=-1,
                         help='-1 means cpu mode, put gpu id here')
     parser.add_argument('--batch', '-b', type=int,
-                        default=128,
+                        default=64,
                         help='batch number')
     parser.add_argument('--lr', '-lr', type=float,
                         default=0.1,
