@@ -91,17 +91,9 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         modules = []
         # register layers
         [self.add_link(*link) for link in modules]
-        modules += [('resblock_1', ResBlock(embed_dimension, 128, 3))]
-        modules += [('resblock_2', ResBlock(128, 256, 3))]
-        modules += [('resblock_3', ResBlock(256, 256, 3))]
-        modules += [('resblock_4', ResBlock(256, 256, 3))]
-        modules += [('resblock_5', ResBlock(256, 512, 3))]
-        modules += [('resblock_6', ResBlock(512, 512, 3))]
-        modules += [('resblock_7', ResBlock(512, 512, 3))]
-        modules += [('resblock_8', ResBlock(512, 1024, 3))]
-        modules += [('resblock_9', ResBlock(1024, 1024, 3))]
-        modules += [('resblock_10', ResBlock(1024, 1024, 3))]
-        modules += [('gated_conv', Gated_Linear_Unit(1024, category_num, 3))]
+        modules += [('resblock_1', ResBlock(embed_dimension, 128, 5))]
+        modules += [('resblock_2', ResBlock(128, 256, 5))]
+        modules += [('gated_conv', Gated_Linear_Unit(256, category_num, 5))]
         # register layers
         [self.add_link(*link) for link in modules]
         self.modules = modules
