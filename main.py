@@ -23,7 +23,7 @@ if __name__ == '__main__':
                         default=0.1,
                         help='learning rate')
     parser.add_argument('--epoch', '-e', type=int,
-                        default=200,
+                        default=100,
                         help='total epoch')
     print('learng bit inversion')
     print(' example: 0100100101 -> 0111000110')
