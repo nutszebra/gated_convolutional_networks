@@ -17,7 +17,8 @@ class DoNothing(object):
 
 class Gated_Linear_Unit(nutszebra_chainer.Model):
 
-    def __init__(self, in_channel, out_channel, timestep=2, activation=F.relu):
+    # def __init__(self, in_channel, out_channel, timestep=2, activation=F.relu):
+    def __init__(self, in_channel, out_channel, timestep=2, activation=DoNothing()):
         self.timestep = timestep
         self.pad = timestep - 1
         self.activation = activation
@@ -102,7 +103,8 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         modules += [('resblock_3', ResBlock(16, 16, 3))]
         modules += [('resblock_4', ResBlock(16, 16, 3))]
         modules += [('resblock_5', ResBlock(16, 32, 3))]
-        modules += [('gated_conv', Gated_Linear_Unit(32, category_num, 3, F.tanh))]
+        # modules += [('gated_conv', Gated_Linear_Unit(32, category_num, 3, F.tanh))]
+        modules += [('gated_conv', Gated_Linear_Unit(32, category_num, 3, DoNothing()))]
         # register layers
         [self.add_link(*link) for link in modules]
         self.modules = modules
