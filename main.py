@@ -77,6 +77,7 @@ if __name__ == '__main__':
     print('start learning')
     for i in epoch_bar:
         if i in [int(epoch * 0.5), int(epoch * 0.75)]:
+            print('lr: {} -> {}'.format(optimizer.lr, optimizer.lr / 10))
             optimizer.lr /= 10
         train_bar = utility.create_progressbar(int(len(train_x) / batch), desc='train', stride=1, start=1)
         accum_loss = 0
