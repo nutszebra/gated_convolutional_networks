@@ -51,7 +51,7 @@ class Conv_For_GLU(nutszebra_chainer.Model):
 
 class Gated_Unit(nutszebra_chainer.Model):
 
-    def __init__(self, in_channel, out_channel, timestep=2, activation=F.tanh):
+    def __init__(self, in_channel, out_channel, timestep=2, activation=F.relu):
         super(Gated_Unit, self).__init__()
         modules = []
         modules += [('conv', Conv_For_GLU(in_channel, out_channel, timestep))]
