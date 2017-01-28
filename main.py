@@ -11,16 +11,17 @@ from nutszebra_utility import Utility as utility
 from chainer import optimizers
 import nutszebra_basic_print
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='bit inversion')
     parser.add_argument('--gpu', '-g', type=int,
                         default=-1,
                         help='-1 means cpu mode, put gpu id here')
     parser.add_argument('--batch', '-b', type=int,
-                        default=64,
+                        default=32,
                         help='batch number')
     parser.add_argument('--lr', '-lr', type=float,
-                        default=1.0,
+                        default=0.1,
                         help='learning rate')
     parser.add_argument('--epoch', '-e', type=int,
                         default=40,
@@ -76,6 +77,7 @@ if __name__ == '__main__':
     optimizer.add_hook(clip)
     print(' lr: {}'.format(lr))
     print(' weight decay: {}'.format(1.0e-4))
+    print(' clip: {}'.format(1.0e-1))
 
     print('start learning')
     for i in epoch_bar:
