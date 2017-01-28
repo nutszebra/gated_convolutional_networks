@@ -41,7 +41,7 @@ Not implemented
 * Optimization  
 Momentum SGD with 0.99 momentum  
 
-* Gradient Clipping 
+* Gradient Clipping  
 0.1  
 
 * Weight decay  
