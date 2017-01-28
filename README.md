@@ -26,7 +26,7 @@ This script solves bits inversion by gated convolutional networks.
 # Details about my implementation
 All hyperparameters and network architecture are the same as in [[1]][Paper] except for some parts.
 
-* Learning rate schedule
+* Learning rate schedule  
 Initial learning rate is 0.1 and learning rate is divided by 10 at [20, 30] epochs. The total number of epochs is 40
 
 * Resblock  
