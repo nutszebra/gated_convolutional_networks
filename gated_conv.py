@@ -79,17 +79,16 @@ class Gated_Unit(nutszebra_chainer.Model):
 
 class ResBlock(nutszebra_chainer.Model):
 
-    def __init__(self, in_channel, out_channel, timestep=2):
+    def __init__(self, in_channel, out_channel, timestep=2, block_num=2):
         super(ResBlock, self).__init__()
         modules = []
-        modules += [('conv1', Gated_Unit(in_channel, out_channel, timestep))]
-        modules += [('conv2', Gated_Unit(out_channel, out_channel, timestep))]
-        modules += [('conv3', Gated_Unit(out_channel, out_channel, timestep))]
-        modules += [('conv4', Gated_Unit(out_channel, out_channel, timestep))]
-        modules += [('conv5', Gated_Unit(out_channel, out_channel, timestep))]
+        for i in six.moves.range(block_num):
+            modules += [('conv{}'.format(i), Gated_Unit(in_channel, out_channel, timestep))]
+            in_channel = out_channel
         # register layers
         [self.add_link(*link) for link in modules]
         self.modules = modules
+        self.block_num = block_num
 
     def weight_initialization(self):
         [link.weight_initialization() for _, link in self.modules]
@@ -99,7 +98,7 @@ class ResBlock(nutszebra_chainer.Model):
 
     def __call__(self, x, train=False):
         h = x
-        for i in six.moves.range(1, 5 + 1):
+        for i in six.moves.range(self.block_num):
             h = self['conv{}'.format(i)](h, train)
         diff_channel = h.data.shape[2] - x.data.shape[2]
         return h + Conv_For_GLU.add_zero_pad(x, diff_channel, 2)
