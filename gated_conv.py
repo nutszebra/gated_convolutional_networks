@@ -51,7 +51,7 @@ class Conv_For_GLU(nutszebra_chainer.Model):
 
 class Gated_Unit(nutszebra_chainer.Model):
 
-    def __init__(self, in_channel, out_channel, timestep=2, activation=F.relu):
+    def __init__(self, in_channel, out_channel, timestep=2, activation=DoNothing()):
         super(Gated_Unit, self).__init__()
         modules = []
         modules += [('conv', Conv_For_GLU(in_channel, out_channel, timestep))]
@@ -111,10 +111,17 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         modules = []
         # register layers
         [self.add_link(*link) for link in modules]
-        modules += [('resblock_1', ResBlock(embed_dimension, 4, 4))]
-        modules += [('resblock_2', ResBlock(4, 4, 4))]
-        # modules += [('gated_conv', Gated_Unit(32, category_num, 3, F.tanh))]
-        modules += [('conv', Conv_For_GLU(4, category_num, 4))]
+        modules += [('resblock_1', ResBlock(embed_dimension, 16, 4))]
+        modules += [('resblock_2', ResBlock(16, 16, 4))]
+        modules += [('resblock_3', ResBlock(16, 16, 4))]
+        modules += [('resblock_4', ResBlock(16, 16, 4))]
+        modules += [('resblock_5', ResBlock(16, 16, 4))]
+        modules += [('resblock_6', ResBlock(16, 16, 4))]
+        modules += [('resblock_7', ResBlock(16, 16, 4))]
+        modules += [('resblock_8', ResBlock(16, 16, 4))]
+        modules += [('resblock_9', ResBlock(16, 16, 4))]
+        modules += [('resblock_10', ResBlock(16, 16, 4))]
+        modules += [('conv', Conv_For_GLU(16, category_num, 4))]
         # register layers
         [self.add_link(*link) for link in modules]
         self.modules = modules
@@ -129,7 +136,7 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         return int(np.sum([link.count_parameters() for _, link in self.modules]))
 
     def __call__(self, x, train=True):
-        for i in six.moves.range(1, 2 + 1):
+        for i in six.moves.range(1, 10 + 1):
             x = self['resblock_{}'.format(i)](x, train)
         batch = x.data.shape[0]
         return F.reshape(self.conv(x), (batch, self.category_num, -1))
