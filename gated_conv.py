@@ -114,11 +114,8 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         [self.add_link(*link) for link in modules]
         modules += [('resblock_1', ResBlock(embed_dimension, 4, 4))]
         modules += [('resblock_2', ResBlock(4, 4, 4))]
-        modules += [('resblock_3', ResBlock(4, 8, 4))]
-        modules += [('resblock_4', ResBlock(8, 8, 4))]
-        modules += [('resblock_5', ResBlock(8, 8, 4))]
         # modules += [('gated_conv', Gated_Unit(32, category_num, 3, F.tanh))]
-        modules += [('conv', Conv_For_GLU(8, category_num, 4))]
+        modules += [('conv', Conv_For_GLU(4, category_num, 4))]
         # register layers
         [self.add_link(*link) for link in modules]
         self.modules = modules
@@ -133,7 +130,7 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         return int(np.sum([link.count_parameters() for _, link in self.modules]))
 
     def __call__(self, x, train=True):
-        for i in six.moves.range(1, 5 + 1):
+        for i in six.moves.range(1, 2 + 1):
             x = self['resblock_{}'.format(i)](x, train)
         batch = x.data.shape[0]
         return F.reshape(self.conv(x), (batch, self.category_num, -1))
