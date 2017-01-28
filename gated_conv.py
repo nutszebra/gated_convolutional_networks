@@ -75,6 +75,9 @@ class ResBlock(nutszebra_chainer.Model):
         super(ResBlock, self).__init__(
             conv1=Gated_Linear_Unit(in_channel, out_channel, timestep),
             conv2=Gated_Linear_Unit(out_channel, out_channel, timestep),
+            conv3=Gated_Linear_Unit(out_channel, out_channel, timestep),
+            conv4=Gated_Linear_Unit(out_channel, out_channel, timestep),
+            conv5=Gated_Linear_Unit(out_channel, out_channel, timestep),
         )
 
     def weight_initialization(self):
@@ -87,6 +90,9 @@ class ResBlock(nutszebra_chainer.Model):
     def __call__(self, x, train=False):
         h = self.conv1(x, train)
         h = self.conv2(h, train)
+        h = self.conv3(h, train)
+        h = self.conv4(h, train)
+        h = self.conv5(h, train)
         diff_channel = h.data.shape[2] - x.data.shape[2]
         return h + Gated_Linear_Unit.add_zero_pad(x, diff_channel, 2)
 
