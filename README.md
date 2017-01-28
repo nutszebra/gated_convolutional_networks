@@ -16,7 +16,7 @@ This script solves bits inversion by gated convolutional networks.
 # Dependencies
 
     git clone https://github.com/nutszebra/gated_convolutional_networks.git
-    cd prelu_net
+    cd gated_convolutional_networks
     git submodule init
     git submodule update
 
