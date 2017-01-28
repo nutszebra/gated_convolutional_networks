@@ -17,12 +17,11 @@ class DoNothing(object):
 
 class Conv_For_GLU(nutszebra_chainer.Model):
 
-    def __init__(self, in_channel, out_channel, timestep=2):
-        self.timestep = timestep
-        self.pad = timestep - 1
+    def __init__(self, in_channel, out_channel, timestep=3):
         super(Conv_For_GLU, self).__init__(
             conv=L.Convolution2D(1, out_channel, (in_channel, timestep), 1, 0),
         )
+        self.pad = timestep - 1
 
     def count_parameters(self):
         return functools.reduce(lambda a, b: a * b, self.conv.W.data.shape)
@@ -50,20 +49,18 @@ class Conv_For_GLU(nutszebra_chainer.Model):
         return self.conv(self.add_zero_pad(x, self.pad, 3))
 
 
-class Gated_Linear_Unit(nutszebra_chainer.Model):
+class Gated_Unit(nutszebra_chainer.Model):
 
-    # def __init__(self, in_channel, out_channel, timestep=2, activation=F.relu):
-    def __init__(self, in_channel, out_channel, timestep=2, activation=DoNothing()):
-        super(Gated_Linear_Unit, self).__init__()
-        self.timestep = timestep
-        self.pad = timestep - 1
-        self.activation = activation
+    def __init__(self, in_channel, out_channel, timestep=2, activation=F.tanh):
+        super(Gated_Unit, self).__init__()
         modules = []
         modules += [('conv', Conv_For_GLU(in_channel, out_channel, timestep))]
         modules += [('conv_f', Conv_For_GLU(in_channel, out_channel, timestep))]
         # register layers
         [self.add_link(*link) for link in modules]
         self.modules = modules
+        self.pad = timestep - 1
+        self.activation = activation
 
     def weight_initialization(self):
         [link.weight_initialization() for _, link in self.modules]
@@ -73,7 +70,7 @@ class Gated_Linear_Unit(nutszebra_chainer.Model):
 
     def __call__(self, x, train=False):
         # x: batch,  1, in_channel, input_length
-        A = self.conv(x, train)
+        A = self.activation(self.conv(x, train))
         B = F.sigmoid(self.conv_f(x, train))
         h = A * B
         batch, out_channel, _, input_length = h.shape
@@ -85,17 +82,14 @@ class ResBlock(nutszebra_chainer.Model):
     def __init__(self, in_channel, out_channel, timestep=2):
         super(ResBlock, self).__init__()
         modules = []
-        modules += [('conv1', Gated_Linear_Unit(in_channel, out_channel, timestep))]
-        modules += [('conv2', Gated_Linear_Unit(out_channel, out_channel, timestep))]
-        modules += [('conv3', Gated_Linear_Unit(out_channel, out_channel, timestep))]
-        modules += [('conv4', Gated_Linear_Unit(out_channel, out_channel, timestep))]
-        modules += [('conv5', Gated_Linear_Unit(out_channel, out_channel, timestep))]
+        modules += [('conv1', Gated_Unit(in_channel, out_channel, timestep))]
+        modules += [('conv2', Gated_Unit(out_channel, out_channel, timestep))]
+        modules += [('conv3', Gated_Unit(out_channel, out_channel, timestep))]
+        modules += [('conv4', Gated_Unit(out_channel, out_channel, timestep))]
+        modules += [('conv5', Gated_Unit(out_channel, out_channel, timestep))]
         # register layers
         [self.add_link(*link) for link in modules]
         self.modules = modules
-        self.in_channel = in_channel
-        self.out_channel = out_channel
-        self.timestep = timestep
 
     def weight_initialization(self):
         [link.weight_initialization() for _, link in self.modules]
@@ -123,7 +117,7 @@ class Gated_Convolutional_Network(nutszebra_chainer.Model):
         modules += [('resblock_3', ResBlock(4, 8, 4))]
         modules += [('resblock_4', ResBlock(8, 8, 4))]
         modules += [('resblock_5', ResBlock(8, 8, 4))]
-        # modules += [('gated_conv', Gated_Linear_Unit(32, category_num, 3, F.tanh))]
+        # modules += [('gated_conv', Gated_Unit(32, category_num, 3, F.tanh))]
         modules += [('conv', Conv_For_GLU(8, category_num, 4))]
         # register layers
         [self.add_link(*link) for link in modules]
