@@ -20,11 +20,12 @@ if __name__ == '__main__':
                         default=64,
                         help='batch number')
     parser.add_argument('--lr', '-lr', type=float,
-                        default=0.01,
+                        default=1.0,
                         help='learning rate')
     parser.add_argument('--epoch', '-e', type=int,
                         default=40,
                         help='total epoch')
+
     print('learng bit inversion')
     print(' example: 0100100101 -> 0111000110')
     args = parser.parse_args().__dict__
@@ -67,10 +68,12 @@ if __name__ == '__main__':
     epoch_bar = utility.create_progressbar(epoch, desc='epoch', start=1)
 
     print('set optimizier')
-    optimizer = optimizers.MomentumSGD(lr, 0.9)
+    optimizer = optimizers.MomentumSGD(lr, 0.99)
     weight_decay = chainer.optimizer.WeightDecay(1.0e-4)
+    clip = chainer.optimizer.GradientClipping(0.1)
     optimizer.setup(model)
     optimizer.add_hook(weight_decay)
+    optimizer.add_hook(clip)
     print(' lr: {}'.format(lr))
     print(' weight decay: {}'.format(1.0e-4))
 
